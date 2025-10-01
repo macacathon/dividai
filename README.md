@@ -27,7 +27,7 @@ Acesse: [https://Macacathon.github.io/dividai/](https://Macacathon.github.io/div
 - [Gabriel David Assed]
 - [Gabriel Pacheco]
 - [Samuel Schizari Demacq Lago]
-- [Rychard (Rasmusem)]
+- [Richardy Gabriel Rodrigues da Costa]
 
 ## 📝 Licença
 
