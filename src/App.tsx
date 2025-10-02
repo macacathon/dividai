@@ -198,7 +198,7 @@ export default function DividAiApp() {
         <div className="absolute top-4 right-4">
           <button
             onClick={() => setDarkMode(!darkMode)}
-            className={`p-3 rounded-full ${darkMode ? 'bg-gray-800 text-yellow-400' : 'bg-white text-gray-700'} shadow-lg hover:shadow-xl transition`}
+            className={`p-3 rounded-full ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-700'} shadow-lg hover:shadow-xl transition`}
           >
             {darkMode ? <Sun size={20} /> : <Moon size={20} />}
           </button>
@@ -257,7 +257,7 @@ export default function DividAiApp() {
             <div className="hidden md:flex items-center space-x-4">
               <button
                 onClick={() => setDarkMode(!darkMode)}
-                className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-yellow-400' : 'bg-gray-100 text-gray-700'} hover:shadow-lg transition`}
+                className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-700'} hover:shadow-lg transition`}
               >
                 {darkMode ? <Sun size={20} /> : <Moon size={20} />}
               </button>
@@ -301,7 +301,7 @@ export default function DividAiApp() {
                     setDarkMode(!darkMode);
                     setIsMobileMenuOpen(false);
                   }}
-                  className={`flex-1 mr-3 py-2 rounded-lg ${darkMode ? 'bg-gray-800 text-yellow-400' : 'bg-gray-100 text-gray-700'} hover:shadow-md transition`}
+                  className={`flex-1 mr-3 py-2 rounded-lg ${darkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-700'} hover:shadow-md transition`}
                 >
                   <div className="flex items-center justify-center space-x-2">
                     {darkMode ? <Sun size={18} /> : <Moon size={18} />}
