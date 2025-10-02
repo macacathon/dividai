@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Users, DollarSign, PieChart, CheckCircle, Menu, X, Moon, Sun, Plus, Trash2, Edit2, UserPlus, Receipt, TrendingUp } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Users, DollarSign, PieChart, CheckCircle, Menu, X, Moon, Sun, Trash2, Receipt, TrendingUp, UserPlus } from 'lucide-react';
 
 interface Group {
   id: number;
@@ -26,7 +26,7 @@ interface NewExpense {
   description: string;
   amount: string;
   paidBy: string;
-  groupId: number | null;
+  groupId: string;
 }
 
 interface ModalProps {
@@ -50,6 +50,7 @@ export default function DividAiApp() {
   const [showGroupDetails, setShowGroupDetails] = useState(false);
   const [showSettlement, setShowSettlement] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const [groups, setGroups] = useState<Group[]>([
     { id: 1, name: 'Viagem Praia 2024', members: ['João', 'Maria', 'Pedro'], total: 1250.50 },
@@ -64,7 +65,18 @@ export default function DividAiApp() {
   ]);
 
   const [newGroup, setNewGroup] = useState<NewGroup>({ name: '', members: '' });
-  const [newExpense, setNewExpense] = useState<NewExpense>({ description: '', amount: '', paidBy: '', groupId: null });
+  const [newExpense, setNewExpense] = useState<NewExpense>({ description: '', amount: '', paidBy: '', groupId: '' });
+
+  useEffect(() => {
+    const storedTheme = localStorage.getItem('dividai:darkMode');
+    if (storedTheme !== null) {
+      setDarkMode(storedTheme === 'true');
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('dividai:darkMode', String(darkMode));
+  }, [darkMode]);
 
   const handleCreateGroup = () => {
     if (newGroup.name && newGroup.members) {
@@ -82,9 +94,15 @@ export default function DividAiApp() {
 
   const handleAddExpense = () => {
     if (newExpense.description && newExpense.amount && newExpense.paidBy && newExpense.groupId) {
+      const parsedGroupId = parseInt(newExpense.groupId, 10);
+
+      if (Number.isNaN(parsedGroupId)) {
+        return;
+      }
+
       const expense: Expense = {
         id: expenses.length + 1,
-        groupId: newExpense.groupId,
+        groupId: parsedGroupId,
         description: newExpense.description,
         amount: parseFloat(newExpense.amount),
         paidBy: newExpense.paidBy,
@@ -98,7 +116,7 @@ export default function DividAiApp() {
           : g
       ));
       
-      setNewExpense({ description: '', amount: '', paidBy: '', groupId: null });
+      setNewExpense({ description: '', amount: '', paidBy: '', groupId: '' });
       setShowAddExpense(false);
     }
   };
@@ -130,8 +148,8 @@ export default function DividAiApp() {
   };
 
   const getSettlementInstructions = (balances: Record<string, number>): Settlement[] => {
-    const creditors = Object.entries(balances).filter(([_, amount]) => amount > 0);
-    const debtors = Object.entries(balances).filter(([_, amount]) => amount < 0);
+    const creditors = Object.entries(balances).filter(([, amount]) => amount > 0);
+    const debtors = Object.entries(balances).filter(([, amount]) => amount < 0);
     const instructions: Settlement[] = [];
     
     const balancesCopy = { ...balances };
@@ -139,7 +157,7 @@ export default function DividAiApp() {
     debtors.forEach(([debtor, debtAmount]) => {
       let remainingDebt = Math.abs(debtAmount);
       
-      creditors.forEach(([creditor, creditAmount]) => {
+      creditors.forEach(([creditor]) => {
         if (remainingDebt > 0.01 && balancesCopy[creditor] > 0.01) {
           const amount = Math.min(remainingDebt, balancesCopy[creditor]);
           instructions.push({
@@ -160,7 +178,7 @@ export default function DividAiApp() {
     if (!isOpen) return null;
     
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl`}>
           <div className="flex justify-between items-center mb-4">
             <h3 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{title}</h3>
@@ -217,17 +235,26 @@ export default function DividAiApp() {
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <header className={`${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
+      <header className={`${darkMode ? 'bg-gray-900/80' : 'bg-white/80'} backdrop-blur-md sticky top-0 z-40 shadow-md transition-colors duration-300`}>
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-white" />
+            <div className="flex items-center space-x-3">
+              <button
+                className={`md:hidden p-2 rounded-lg border ${darkMode ? 'border-gray-700 text-gray-300' : 'border-gray-200 text-gray-700'} transition`}
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-label={isMobileMenuOpen ? 'Fechar menu' : 'Abrir menu'}
+              >
+                {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+              </button>
+              <div className="flex items-center space-x-2">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+                  <DollarSign className="w-6 h-6 text-white" />
+                </div>
+                <span className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>DividAí</span>
               </div>
-              <span className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>DividAí</span>
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="hidden md:flex items-center space-x-4">
               <button
                 onClick={() => setDarkMode(!darkMode)}
                 className={`p-2 rounded-lg ${darkMode ? 'bg-gray-700 text-yellow-400' : 'bg-gray-100 text-gray-700'} hover:shadow-lg transition`}
@@ -242,6 +269,57 @@ export default function DividAiApp() {
               </button>
             </div>
           </div>
+          {isMobileMenuOpen && (
+            <div className={`md:hidden pb-4 space-y-3 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => {
+                    setShowCreateGroup(true);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold shadow-lg"
+                >
+                  <UserPlus size={18} />
+                  <span>Grupo</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAddExpense(true);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`flex items-center justify-center space-x-2 px-4 py-3 rounded-xl font-semibold shadow-lg ${
+                    darkMode ? 'bg-gray-800 text-white border border-gray-700' : 'bg-white text-gray-800 border border-gray-200'
+                  }`}
+                >
+                  <DollarSign size={18} />
+                  <span>Despesa</span>
+                </button>
+              </div>
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => {
+                    setDarkMode(!darkMode);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`flex-1 mr-3 py-2 rounded-lg ${darkMode ? 'bg-gray-800 text-yellow-400' : 'bg-gray-100 text-gray-700'} hover:shadow-md transition`}
+                >
+                  <div className="flex items-center justify-center space-x-2">
+                    {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+                    <span>{darkMode ? 'Tema Claro' : 'Tema Escuro'}</span>
+                  </div>
+                </button>
+                <button
+                  onClick={() => {
+                    setIsLoggedIn(false);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`px-4 py-2 rounded-lg ${darkMode ? 'bg-gray-800 text-white border border-gray-700' : 'bg-gray-100 text-gray-700 border border-gray-200'} hover:shadow-md transition`}
+                >
+                  Sair
+                </button>
+              </div>
+            </div>
+          )}
         </nav>
       </header>
 
@@ -285,7 +363,7 @@ export default function DividAiApp() {
             onClick={() => setShowCreateGroup(true)}
             className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-xl transition"
           >
-            <Plus size={20} />
+            <UserPlus size={20} />
             <span>Novo Grupo</span>
           </button>
           
@@ -403,8 +481,8 @@ export default function DividAiApp() {
               Grupo
             </label>
             <select
-              value={newExpense.groupId || ''}
-              onChange={(e) => setNewExpense({ ...newExpense, groupId: parseInt(e.target.value) })}
+              value={newExpense.groupId}
+              onChange={(e) => setNewExpense({ ...newExpense, groupId: e.target.value })}
               className={`w-full px-4 py-2 rounded-lg border ${
                 darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
               } focus:ring-2 focus:ring-blue-600 outline-none`}
