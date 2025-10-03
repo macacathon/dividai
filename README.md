@@ -26,8 +26,8 @@ Acesse: [https://Macacathon.github.io/dividai/](https://Macacathon.github.io/div
 - [Felipe Jorge Battarra]
 - [Gabriel David Assed]
 - [Gabriel Pacheco]
-- [Samuel Schizari Demacq Lago]
-- [Rychard (Rasmusem)]
+- [Joâo Luiz]
+- [Rychard Gabriel]
 
 ## 📝 Licença
 
