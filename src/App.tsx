@@ -1,46 +1,5 @@
 import React, { useState } from 'react';
-import { Users, DollarSign, PieChart, CheckCircle, Menu, X, Moon, Sun, Plus, Trash2, Edit2, UserPlus, Receipt, TrendingUp } from 'lucide-react';
-
-interface Group {
-  id: number;
-  name: string;
-  members: string[];
-  total: number;
-}
-
-interface Expense {
-  id: number;
-  groupId: number;
-  description: string;
-  amount: number;
-  paidBy: string;
-  date: string;
-}
-
-interface NewGroup {
-  name: string;
-  members: string;
-}
-
-interface NewExpense {
-  description: string;
-  amount: string;
-  paidBy: string;
-  groupId: number | null;
-}
-
-interface ModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  title: string;
-  children: React.ReactNode;
-}
-
-interface Settlement {
-  from: string;
-  to: string;
-  amount: number;
-}
+import { Users, DollarSign, PieChart, CheckCircle, Menu, X, Moon, Sun, Plus, Trash2, Edit2, UserPlus, Receipt, TrendingUp, Clock } from 'lucide-react';
 
 export default function DividAiApp() {
   const [darkMode, setDarkMode] = useState(false);
@@ -49,32 +8,50 @@ export default function DividAiApp() {
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [showGroupDetails, setShowGroupDetails] = useState(false);
   const [showSettlement, setShowSettlement] = useState(false);
-  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+  const [showActivity, setShowActivity] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState(null);
   
-  const [groups, setGroups] = useState<Group[]>([
+  const [activities, setActivities] = useState([
+    { id: 1, type: 'group', action: 'criou o grupo', target: 'Viagem Praia 2024', user: 'Você', timestamp: new Date('2024-03-10T10:30:00') },
+    { id: 2, type: 'expense', action: 'adicionou despesa', target: 'Hotel - R$ 800,00', user: 'João', timestamp: new Date('2024-03-15T14:20:00') },
+  ]);
+  
+  const [groups, setGroups] = useState([
     { id: 1, name: 'Viagem Praia 2024', members: ['João', 'Maria', 'Pedro'], total: 1250.50 },
     { id: 2, name: 'República', members: ['João', 'Carlos', 'Ana', 'Lucas'], total: 3420.00 },
   ]);
 
-  const [expenses, setExpenses] = useState<Expense[]>([
+  const [expenses, setExpenses] = useState([
     { id: 1, groupId: 1, description: 'Hotel', amount: 800, paidBy: 'João', date: '2024-03-15' },
     { id: 2, groupId: 1, description: 'Mercado', amount: 450.50, paidBy: 'Maria', date: '2024-03-16' },
     { id: 3, groupId: 2, description: 'Aluguel', amount: 2000, paidBy: 'João', date: '2024-03-01' },
     { id: 4, groupId: 2, description: 'Energia', amount: 420, paidBy: 'Carlos', date: '2024-03-05' },
   ]);
 
-  const [newGroup, setNewGroup] = useState<NewGroup>({ name: '', members: '' });
-  const [newExpense, setNewExpense] = useState<NewExpense>({ description: '', amount: '', paidBy: '', groupId: null });
+  const [newGroup, setNewGroup] = useState({ name: '', members: '' });
+  const [newExpense, setNewExpense] = useState({ description: '', amount: '', paidBy: '', groupId: null });
 
   const handleCreateGroup = () => {
     if (newGroup.name && newGroup.members) {
       const membersArray = newGroup.members.split(',').map(m => m.trim());
-      setGroups([...groups, { 
+      const group = { 
         id: groups.length + 1, 
         name: newGroup.name, 
         members: membersArray, 
         total: 0 
-      }]);
+      };
+      setGroups([...groups, group]);
+      
+      // Adicionar atividade
+      setActivities([{
+        id: activities.length + 1,
+        type: 'group',
+        action: 'criou o grupo',
+        target: newGroup.name,
+        user: 'Você',
+        timestamp: new Date()
+      }, ...activities]);
+      
       setNewGroup({ name: '', members: '' });
       setShowCreateGroup(false);
     }
@@ -82,9 +59,9 @@ export default function DividAiApp() {
 
   const handleAddExpense = () => {
     if (newExpense.description && newExpense.amount && newExpense.paidBy && newExpense.groupId) {
-      const expense: Expense = {
+      const expense = {
         id: expenses.length + 1,
-        groupId: newExpense.groupId,
+        groupId: parseInt(newExpense.groupId),
         description: newExpense.description,
         amount: parseFloat(newExpense.amount),
         paidBy: newExpense.paidBy,
@@ -92,36 +69,52 @@ export default function DividAiApp() {
       };
       setExpenses([...expenses, expense]);
       
+      // Update group total
       setGroups(groups.map(g => 
         g.id === expense.groupId 
           ? { ...g, total: g.total + expense.amount }
           : g
       ));
       
+      // Adicionar atividade
+      const groupName = groups.find(g => g.id === expense.groupId)?.name;
+      setActivities([{
+        id: activities.length + 1,
+        type: 'expense',
+        action: 'adicionou despesa',
+        target: `${expense.description} - R$ ${expense.amount.toFixed(2)} (${groupName})`,
+        user: expense.paidBy,
+        timestamp: new Date()
+      }, ...activities]);
+      
       setNewExpense({ description: '', amount: '', paidBy: '', groupId: null });
       setShowAddExpense(false);
     }
   };
 
-  const handleDeleteGroup = (id: number) => {
+  const handleDeleteGroup = (id) => {
     setGroups(groups.filter(g => g.id !== id));
     setExpenses(expenses.filter(e => e.groupId !== id));
   };
 
-  const calculateSettlement = (group: Group): Record<string, number> => {
+  const calculateSettlement = (group) => {
     const groupExpenses = expenses.filter(e => e.groupId === group.id);
-    const balances: Record<string, number> = {};
+    const balances = {};
     
+    // Initialize balances
     group.members.forEach(member => {
       balances[member] = 0;
     });
     
+    // Calculate what each person paid
     groupExpenses.forEach(expense => {
       balances[expense.paidBy] = (balances[expense.paidBy] || 0) + expense.amount;
     });
     
+    // Calculate share per person
     const sharePerPerson = group.total / group.members.length;
     
+    // Calculate final balances (positive = should receive, negative = should pay)
     Object.keys(balances).forEach(member => {
       balances[member] = balances[member] - sharePerPerson;
     });
@@ -129,26 +122,22 @@ export default function DividAiApp() {
     return balances;
   };
 
-  const getSettlementInstructions = (balances: Record<string, number>): Settlement[] => {
+  const getSettlementInstructions = (balances) => {
     const creditors = Object.entries(balances).filter(([_, amount]) => amount > 0);
     const debtors = Object.entries(balances).filter(([_, amount]) => amount < 0);
-    const instructions: Settlement[] = [];
-    
-    const balancesCopy = { ...balances };
+    const instructions = [];
     
     debtors.forEach(([debtor, debtAmount]) => {
-      let remainingDebt = Math.abs(debtAmount);
-      
       creditors.forEach(([creditor, creditAmount]) => {
-        if (remainingDebt > 0.01 && balancesCopy[creditor] > 0.01) {
-          const amount = Math.min(remainingDebt, balancesCopy[creditor]);
+        if (Math.abs(debtAmount) > 0.01 && creditAmount > 0.01) {
+          const amount = Math.min(Math.abs(debtAmount), creditAmount);
           instructions.push({
             from: debtor,
             to: creditor,
             amount: amount
           });
-          remainingDebt -= amount;
-          balancesCopy[creditor] -= amount;
+          debtAmount += amount;
+          balances[creditor] -= amount;
         }
       });
     });
@@ -156,7 +145,7 @@ export default function DividAiApp() {
     return instructions;
   };
 
-  const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
+  const Modal = ({ isOpen, onClose, title, children }) => {
     if (!isOpen) return null;
     
     return (
@@ -217,6 +206,7 @@ export default function DividAiApp() {
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      {/* Header */}
       <header className={`${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-md`}>
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -245,7 +235,9 @@ export default function DividAiApp() {
         </nav>
       </header>
 
+      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className={`p-6 rounded-2xl ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
             <div className="flex items-center justify-between">
@@ -280,6 +272,7 @@ export default function DividAiApp() {
           </div>
         </div>
 
+        {/* Action Buttons */}
         <div className="flex flex-wrap gap-4 mb-8">
           <button
             onClick={() => setShowCreateGroup(true)}
@@ -298,8 +291,19 @@ export default function DividAiApp() {
             <DollarSign size={20} />
             <span>Adicionar Despesa</span>
           </button>
+          
+          <button
+            onClick={() => setShowActivity(true)}
+            className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-semibold hover:shadow-xl transition ${
+              darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-700 border-2 border-gray-200'
+            }`}
+          >
+            <Clock size={20} />
+            <span>Atividades</span>
+          </button>
         </div>
 
+        {/* Groups List */}
         <div className="space-y-4">
           <h2 className={`text-2xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Meus Grupos</h2>
           
@@ -355,6 +359,7 @@ export default function DividAiApp() {
         </div>
       </main>
 
+      {/* Create Group Modal */}
       <Modal isOpen={showCreateGroup} onClose={() => setShowCreateGroup(false)} title="Criar Novo Grupo">
         <div className="space-y-4">
           <div>
@@ -396,6 +401,7 @@ export default function DividAiApp() {
         </div>
       </Modal>
 
+      {/* Add Expense Modal */}
       <Modal isOpen={showAddExpense} onClose={() => setShowAddExpense(false)} title="Adicionar Despesa">
         <div className="space-y-4">
           <div>
@@ -404,7 +410,7 @@ export default function DividAiApp() {
             </label>
             <select
               value={newExpense.groupId || ''}
-              onChange={(e) => setNewExpense({ ...newExpense, groupId: parseInt(e.target.value) })}
+              onChange={(e) => setNewExpense({ ...newExpense, groupId: e.target.value })}
               className={`w-full px-4 py-2 rounded-lg border ${
                 darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
               } focus:ring-2 focus:ring-blue-600 outline-none`}
@@ -471,6 +477,7 @@ export default function DividAiApp() {
         </div>
       </Modal>
 
+      {/* Group Details Modal */}
       <Modal 
         isOpen={showGroupDetails} 
         onClose={() => {
@@ -512,6 +519,7 @@ export default function DividAiApp() {
         )}
       </Modal>
 
+      {/* Settlement Modal */}
       <Modal 
         isOpen={showSettlement} 
         onClose={() => {
@@ -564,6 +572,61 @@ export default function DividAiApp() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Activity Feed Modal */}
+      <Modal 
+        isOpen={showActivity} 
+        onClose={() => setShowActivity(false)} 
+        title="Histórico de Atividades"
+      >
+        <div className="space-y-3">
+          {activities.length === 0 ? (
+            <p className={`text-center py-8 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              Nenhuma atividade ainda
+            </p>
+          ) : (
+            activities.map(activity => {
+              const timeAgo = () => {
+                const diff = new Date() - activity.timestamp;
+                const minutes = Math.floor(diff / 60000);
+                const hours = Math.floor(diff / 3600000);
+                const days = Math.floor(diff / 86400000);
+                
+                if (days > 0) return `há ${days} dia${days > 1 ? 's' : ''}`;
+                if (hours > 0) return `há ${hours} hora${hours > 1 ? 's' : ''}`;
+                if (minutes > 0) return `há ${minutes} minuto${minutes > 1 ? 's' : ''}`;
+                return 'agora mesmo';
+              };
+              
+              return (
+                <div key={activity.id} className={`p-4 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-gray-100'} hover:shadow-md transition`}>
+                  <div className="flex items-start space-x-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      activity.type === 'group' ? 'bg-blue-100' : 'bg-green-100'
+                    }`}>
+                      {activity.type === 'group' ? (
+                        <Users size={18} className="text-blue-600" />
+                      ) : (
+                        <Receipt size={18} className="text-green-600" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p className={`${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                        <span className="font-semibold">{activity.user}</span>{' '}
+                        {activity.action}{' '}
+                        <span className="font-semibold">{activity.target}</span>
+                      </p>
+                      <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'} mt-1`}>
+                        {timeAgo()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
       </Modal>
     </div>
   );
