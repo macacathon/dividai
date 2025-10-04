@@ -149,8 +149,8 @@ export default function DividAiApp() {
     if (!isOpen) return null;
     
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl`}>
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+        <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl`} onClick={(e) => e.stopPropagation()}>
           <div className="flex justify-between items-center mb-4">
             <h3 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{title}</h3>
             <button onClick={onClose} className={`${darkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700'}`}>
@@ -361,7 +361,7 @@ export default function DividAiApp() {
 
       {/* Create Group Modal */}
       <Modal isOpen={showCreateGroup} onClose={() => setShowCreateGroup(false)} title="Criar Novo Grupo">
-        <div className="space-y-4">
+        <form onSubmit={(e) => { e.preventDefault(); handleCreateGroup(); }} className="space-y-4">
           <div>
             <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
               Nome do Grupo
@@ -374,6 +374,7 @@ export default function DividAiApp() {
                 darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
               } focus:ring-2 focus:ring-blue-600 outline-none`}
               placeholder="Ex: Viagem Praia 2024"
+              autoFocus
             />
           </div>
           
@@ -393,17 +394,17 @@ export default function DividAiApp() {
           </div>
           
           <button
-            onClick={handleCreateGroup}
+            type="submit"
             className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:shadow-xl transition"
           >
             Criar Grupo
           </button>
-        </div>
+        </form>
       </Modal>
 
       {/* Add Expense Modal */}
       <Modal isOpen={showAddExpense} onClose={() => setShowAddExpense(false)} title="Adicionar Despesa">
-        <div className="space-y-4">
+        <form onSubmit={(e) => { e.preventDefault(); handleAddExpense(); }} className="space-y-4">
           <div>
             <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
               Grupo
@@ -469,12 +470,12 @@ export default function DividAiApp() {
           </div>
           
           <button
-            onClick={handleAddExpense}
+            type="submit"
             className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:shadow-xl transition"
           >
             Adicionar Despesa
           </button>
-        </div>
+        </form>
       </Modal>
 
       {/* Group Details Modal */}
