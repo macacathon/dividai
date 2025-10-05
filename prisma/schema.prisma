@@ -37,3 +37,12 @@ model Expense {
   groupId     String
   createdAt   DateTime @default(now())
 }
+
+model Settlement {
+  id        String   @id @default(uuid())
+  fromUser  String
+  toUser    String
+  amount    Float
+  groupId   String
+  createdAt DateTime @default(now())
+}
