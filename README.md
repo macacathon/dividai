@@ -32,3 +32,7 @@ Acesse: [https://Macacathon.github.io/dividai/](https://Macacathon.github.io/div
 ## 📝 Licença
 
 MIT
+
+## Objetivo do fork
+
+Criado o schema database para integração com o aplicativo, onde será guardado as informações lançadas no app em um local seguro.
