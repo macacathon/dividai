@@ -28,3 +28,12 @@ model Group {
   members   String
   total     Float
 }
+
+model Expense {
+  id          String   @id @default(uuid())
+  description String
+  amount      Float
+  paidBy      String
+  groupId     String
+  createdAt   DateTime @default(now())
+}
