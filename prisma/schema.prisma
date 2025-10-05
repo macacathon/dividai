@@ -27,6 +27,7 @@ model Group {
   name      String
   members   String
   total     Float
+  createdAt DateTime @default(now())
 }
 
 model Expense {
