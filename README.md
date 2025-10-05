@@ -23,11 +23,11 @@ Acesse: [https://Macacathon.github.io/dividai/](https://Macacathon.github.io/div
 
 ## 👥 Equipe
 
-- [Felipe Jorge Battarra]
-- [Gabriel David Assed]
+- [Felipe Battarra]
+- [Gabriel Assed]
 - [Gabriel Pacheco]
-- [Joâo Luiz]
-- [Rychard Gabriel]
+- [João Luiz]
+- [Richardy Gabriel]
 
 ## 📝 Licença
 
