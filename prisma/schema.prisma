@@ -14,6 +14,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Modelo Usuário
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
@@ -22,6 +23,7 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
+// Modelo Grupo
 model Group {
   id        String   @id @default(uuid())
   name      String
@@ -30,6 +32,7 @@ model Group {
   createdAt DateTime @default(now())
 }
 
+// Modelo Despesa
 model Expense {
   id          String   @id @default(uuid())
   description String
@@ -39,6 +42,7 @@ model Expense {
   createdAt   DateTime @default(now())
 }
 
+// Modelo Acordo
 model Settlement {
   id        String   @id @default(uuid())
   fromUser  String
