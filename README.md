@@ -12,7 +12,7 @@ Aplicativo web para dividir despesas entre amigos de forma simples e eficiente.
 
 ## 🚀 Como Usar
 
-Acesse: [https://Macacathon.github.io/dividai/](https://Macacathon.github.io/dividai/)
+Acesse: [https://dividai.vercel.app]
 
 ## 🛠️ Tecnologias
 
