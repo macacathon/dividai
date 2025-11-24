@@ -1,5 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
 import {
+  SignInButton,
+  SignOutButton,
+  UserButton,
+  useAuth,
+} from "@clerk/clerk-react";
+import {
   Users,
   DollarSign,
   PieChart,
@@ -67,7 +73,8 @@ interface Activity {
 
 export default function DividAiApp() {
   const [darkMode, setDarkMode] = useState<boolean>(false);
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  // Clerk auth
+  const { getToken, isSignedIn } = useAuth();
   const [showCreateGroup, setShowCreateGroup] = useState<boolean>(false);
   const [showAddExpense, setShowAddExpense] = useState<boolean>(false);
   const [showGroupDetails, setShowGroupDetails] = useState<boolean>(false);
@@ -91,6 +98,7 @@ export default function DividAiApp() {
   const expensePaidByRef = useRef<HTMLInputElement | null>(null);
   const expenseGroupRef = useRef<HTMLSelectElement | null>(null);
 
+  // No nested App component allowed here — keep only the top-level DividAiApp component
   useEffect(() => {
     const storedTheme = localStorage.getItem("dividai:darkMode");
     if (storedTheme !== null) {
@@ -101,10 +109,19 @@ export default function DividAiApp() {
   // Load data from API
   useEffect(() => {
     const load = async () => {
+      if (!isSignedIn) {
+        setGroups([]);
+        setExpenses([]);
+        return;
+      }
       try {
+        const token = await getToken({ template: "session" }).catch(() => null);
+        const headers = token
+          ? { Authorization: `Bearer ${token}` }
+          : undefined;
         const [gRes, eRes] = await Promise.all([
-          fetch("http://localhost:4000/groups"),
-          fetch("http://localhost:4000/expenses"),
+          fetch("http://localhost:4000/groups", { headers }),
+          fetch("http://localhost:4000/expenses", { headers }),
         ]);
 
         const [gJson, eJson] = await Promise.all([gRes.json(), eRes.json()]);
@@ -142,13 +159,13 @@ export default function DividAiApp() {
     };
 
     load();
-  }, []);
+  }, [isSignedIn]);
 
   useEffect(() => {
     localStorage.setItem("dividai:darkMode", String(darkMode));
   }, [darkMode]);
 
-  const handleCreateGroup = () => {
+  const handleCreateGroup = async () => {
     const name = groupNameRef.current?.value ?? "";
     const membersRaw = groupMembersRef.current?.value ?? "";
     if (!name.trim() || !membersRaw.trim()) return;
@@ -160,9 +177,15 @@ export default function DividAiApp() {
 
     if (membersArray.length === 0) return;
 
+    const token = await getToken({ template: "session" }).catch(() => null);
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (token) headers.Authorization = `Bearer ${token}`;
+
     fetch("http://localhost:4000/groups", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({
         name: name.trim(),
         members: membersArray.join(","),
@@ -197,7 +220,7 @@ export default function DividAiApp() {
       .catch((err) => console.error("Failed creating group", err));
   };
 
-  const handleAddExpense = () => {
+  const handleAddExpense = async () => {
     const description = expenseDescriptionRef.current?.value ?? "";
     const amountRaw = expenseAmountRef.current?.value ?? "";
     const paidBy = expensePaidByRef.current?.value ?? "";
@@ -209,9 +232,15 @@ export default function DividAiApp() {
     const amountValue = parseFloat(amountRaw);
     if (Number.isNaN(amountValue) || amountValue <= 0) return;
 
+    const token = await getToken({ template: "session" }).catch(() => null);
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (token) headers.Authorization = `Bearer ${token}`;
+
     fetch("http://localhost:4000/expenses", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({
         description: description.trim(),
         amount: amountValue,
@@ -270,9 +299,13 @@ export default function DividAiApp() {
       .catch((err) => console.error("Failed creating expense", err));
   };
 
-  const handleDeleteGroup = (id: string) => {
+  const handleDeleteGroup = async (id: string) => {
     // call API
-    fetch(`http://localhost:4000/groups/${id}`, { method: "DELETE" })
+    const token = await getToken({ template: "session" }).catch(() => null);
+    const headers: Record<string, string> | undefined = token
+      ? { Authorization: `Bearer ${token}` }
+      : undefined;
+    fetch(`http://localhost:4000/groups/${id}`, { method: "DELETE", headers })
       .then((r) => {
         if (!r.ok) throw new Error("delete failed");
         setGroups((prev) => prev.filter((group) => group.id !== id));
@@ -393,7 +426,7 @@ export default function DividAiApp() {
     return "agora mesmo";
   };
 
-  if (!isLoggedIn) {
+  if (!isSignedIn) {
     return (
       <div
         className={`min-h-screen transition-colors duration-300 ${
@@ -440,12 +473,11 @@ export default function DividAiApp() {
               Bem-vindo de volta!
             </h2>
 
-            <button
-              onClick={() => setIsLoggedIn(true)}
-              className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-xl transition"
-            >
-              Entrar no Sistema
-            </button>
+            <SignInButton mode="modal">
+              <button className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:shadow-xl transition">
+                Entrar no Sistema
+              </button>
+            </SignInButton>
 
             <p
               className={`text-center mt-4 ${
@@ -506,16 +538,20 @@ export default function DividAiApp() {
               >
                 {darkMode ? <Sun size={20} /> : <Moon size={20} />}
               </button>
-              <button
-                onClick={() => setIsLoggedIn(false)}
-                className={`px-4 py-2 rounded-lg ${
-                  darkMode
-                    ? "bg-gray-700 text-white"
-                    : "bg-gray-100 text-gray-700"
-                } hover:shadow-lg transition`}
-              >
-                Sair
-              </button>
+              <div className="flex items-center gap-3">
+                <UserButton />
+                <SignOutButton>
+                  <button
+                    className={`px-4 py-2 rounded-lg ${
+                      darkMode
+                        ? "bg-gray-700 text-white"
+                        : "bg-gray-100 text-gray-700"
+                    } hover:shadow-lg transition`}
+                  >
+                    Sair
+                  </button>
+                </SignOutButton>
+              </div>
             </div>
           </div>
           {isMobileMenuOpen && (
@@ -567,19 +603,18 @@ export default function DividAiApp() {
                     <span>{darkMode ? "Tema Claro" : "Tema Escuro"}</span>
                   </div>
                 </button>
-                <button
-                  onClick={() => {
-                    setIsLoggedIn(false);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className={`px-4 py-2 rounded-lg ${
-                    darkMode
-                      ? "bg-gray-800 text-white border border-gray-700"
-                      : "bg-gray-100 text-gray-700 border border-gray-200"
-                  } hover:shadow-md transition`}
-                >
-                  Sair
-                </button>
+                <SignOutButton>
+                  <button
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`px-4 py-2 rounded-lg ${
+                      darkMode
+                        ? "bg-gray-800 text-white border border-gray-700"
+                        : "bg-gray-100 text-gray-700 border border-gray-200"
+                    } hover:shadow-md transition`}
+                  >
+                    Sair
+                  </button>
+                </SignOutButton>
               </div>
             </div>
           )}

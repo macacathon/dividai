@@ -5,11 +5,13 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 import pkg from '../src/generated/prisma/index.js'
+import { ClerkExpressRequireAuth } from '@clerk/clerk-sdk-node'
 const { PrismaClient } = pkg
 
 const prisma = new PrismaClient()
 const app = express()
-app.use(cors())
+// Allow credentials and passthrough so Authorization headers are accepted from the browser
+app.use(cors({ origin: true, credentials: true }))
 app.use(express.json())
 
 app.get('/', (req, res) => {
@@ -22,7 +24,7 @@ app.get('/users', async (req, res) => {
     res.json(users)
 })
 
-app.post('/users', async (req, res) => {
+app.post('/users', ClerkExpressRequireAuth(), async (req, res) => {
     const { email, name } = req.body
     try {
         const user = await prisma.user.create({ data: { email, name } })
@@ -38,7 +40,7 @@ app.get('/groups', async (req, res) => {
     res.json(groups)
 })
 
-app.post('/groups', async (req, res) => {
+app.post('/groups', ClerkExpressRequireAuth(), async (req, res) => {
     const { name, members = '', total = 0 } = req.body
     try {
         const group = await prisma.group.create({ data: { name, members, total: Number(total) } })
@@ -49,7 +51,7 @@ app.post('/groups', async (req, res) => {
 })
 
 // Delete group and its expenses
-app.delete('/groups/:id', async (req, res) => {
+app.delete('/groups/:id', ClerkExpressRequireAuth(), async (req, res) => {
     const { id } = req.params
     try {
         // delete expenses belonging to group
@@ -68,7 +70,7 @@ app.get('/expenses', async (req, res) => {
     res.json(expenses)
 })
 
-app.post('/expenses', async (req, res) => {
+app.post('/expenses', ClerkExpressRequireAuth(), async (req, res) => {
     const { description, amount, paidBy, groupId } = req.body
     try {
         const expense = await prisma.expense.create({ data: { description, amount: Number(amount), paidBy, groupId } })
@@ -90,7 +92,7 @@ app.post('/expenses', async (req, res) => {
 })
 
 // Delete an expense and update group total
-app.delete('/expenses/:id', async (req, res) => {
+app.delete('/expenses/:id', ClerkExpressRequireAuth(), async (req, res) => {
     const { id } = req.params
     try {
         const expense = await prisma.expense.findUnique({ where: { id } })
@@ -119,7 +121,7 @@ app.get('/settlements', async (req, res) => {
     res.json(settlements)
 })
 
-app.post('/settlements', async (req, res) => {
+app.post('/settlements', ClerkExpressRequireAuth(), async (req, res) => {
     const { fromUser, toUser, amount, groupId } = req.body
     try {
         const settlement = await prisma.settlement.create({ data: { fromUser, toUser, amount: Number(amount), groupId } })
@@ -127,6 +129,16 @@ app.post('/settlements', async (req, res) => {
     } catch (err) {
         res.status(400).json({ error: err.message })
     }
+})
+
+if (!process.env.CLERK_SECRET_KEY) {
+    console.warn('CLERK_SECRET_KEY is not set — server-side Clerk auth will not be able to validate tokens. Add CLERK_SECRET_KEY to your .env file.')
+}
+
+// Basic error handler for clearer messages
+app.use((err, req, res, next) => {
+    console.error('Unhandled server error', err)
+    res.status(500).json({ error: 'Internal server error' })
 })
 
 const port = process.env.PORT || 4000
