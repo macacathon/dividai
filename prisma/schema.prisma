@@ -14,10 +14,40 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Modelo Usuário
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
   name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Modelo Grupo
+model Group {
+  id        String   @id @default(uuid())
+  name      String
+  members   String
+  total     Float
+  createdAt DateTime @default(now())
+}
+
+// Modelo Despesa
+model Expense {
+  id          String   @id @default(uuid())
+  description String
+  amount      Float
+  paidBy      String
+  groupId     String
+  createdAt   DateTime @default(now())
+}
+
+// Modelo Acordo
+model Settlement {
+  id        String   @id @default(uuid())
+  fromUser  String
+  toUser    String
+  amount    Float
+  groupId   String
+  createdAt DateTime @default(now())
 }
