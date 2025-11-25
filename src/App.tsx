@@ -61,8 +61,8 @@ interface Activity {
 
 export default function DividAiApp() {
   const [darkMode, setDarkMode] = useState<boolean>(false);
-  // Clerk auth
   const { getToken, isSignedIn } = useAuth();
+
   const [showCreateGroup, setShowCreateGroup] = useState<boolean>(false);
   const [showAddExpense, setShowAddExpense] = useState<boolean>(false);
   const [showGroupDetails, setShowGroupDetails] = useState<boolean>(false);
@@ -72,12 +72,9 @@ export default function DividAiApp() {
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
 
   const [groups, setGroups] = useState<Group[]>([]);
-
   const [expenses, setExpenses] = useState<Expense[]>([]);
-
   const [activities, setActivities] = useState<Activity[]>([]);
 
-  // Use refs for form fields to avoid re-renders on each keystroke (fixes focus loss while typing)
   const groupNameRef = useRef<HTMLInputElement | null>(null);
   const groupMembersRef = useRef<HTMLInputElement | null>(null);
 
@@ -86,7 +83,6 @@ export default function DividAiApp() {
   const expensePaidByRef = useRef<HTMLInputElement | null>(null);
   const expenseGroupRef = useRef<HTMLSelectElement | null>(null);
 
-  // No nested App component allowed here — keep only the top-level DividAiApp component
   useEffect(() => {
     const storedTheme = localStorage.getItem("dividai:darkMode");
     if (storedTheme !== null) {
@@ -94,7 +90,7 @@ export default function DividAiApp() {
     }
   }, []);
 
-  // Load data from API
+  // Load data from API (USANDO /api EM VEZ DE localhost)
   useEffect(() => {
     const load = async () => {
       if (!isSignedIn) {
@@ -107,14 +103,14 @@ export default function DividAiApp() {
         const headers = token
           ? { Authorization: `Bearer ${token}` }
           : undefined;
+
         const [gRes, eRes] = await Promise.all([
-          fetch("http://localhost:4000/groups", { headers }),
-          fetch("http://localhost:4000/expenses", { headers }),
+          fetch("/api/groups", { headers }),
+          fetch("/api/expenses", { headers }),
         ]);
 
         const [gJson, eJson] = await Promise.all([gRes.json(), eRes.json()]);
 
-        // prisma stores members as comma-separated string; convert
         const groupsFromApi: Group[] = gJson.map((g: any) => ({
           id: g.id,
           name: g.name,
@@ -147,7 +143,7 @@ export default function DividAiApp() {
     };
 
     load();
-  }, [isSignedIn]);
+  }, [isSignedIn, getToken]);
 
   useEffect(() => {
     localStorage.setItem("dividai:darkMode", String(darkMode));
@@ -171,7 +167,8 @@ export default function DividAiApp() {
     };
     if (token) headers.Authorization = `Bearer ${token}`;
 
-    fetch("http://localhost:4000/groups", {
+    // POST /api/groups
+    fetch("/api/groups", {
       method: "POST",
       headers,
       body: JSON.stringify({
@@ -226,7 +223,8 @@ export default function DividAiApp() {
     };
     if (token) headers.Authorization = `Bearer ${token}`;
 
-    fetch("http://localhost:4000/expenses", {
+    // POST /api/expenses
+    fetch("/api/expenses", {
       method: "POST",
       headers,
       body: JSON.stringify({
@@ -288,12 +286,13 @@ export default function DividAiApp() {
   };
 
   const handleDeleteGroup = async (id: string) => {
-    // call API
     const token = await getToken({ template: "session" }).catch(() => null);
     const headers: Record<string, string> | undefined = token
       ? { Authorization: `Bearer ${token}` }
       : undefined;
-    fetch(`http://localhost:4000/groups/${id}`, { method: "DELETE", headers })
+
+    // DELETE /api/groups/:id
+    fetch(`/api/groups/${id}`, { method: "DELETE", headers })
       .then((r) => {
         if (!r.ok) throw new Error("delete failed");
         setGroups((prev) => prev.filter((group) => group.id !== id));
