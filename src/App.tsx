@@ -37,18 +37,6 @@ interface Expense {
   date: string;
 }
 
-interface NewGroup {
-  name: string;
-  members: string;
-}
-
-interface NewExpense {
-  description: string;
-  amount: string;
-  paidBy: string;
-  groupId: string | null;
-}
-
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
