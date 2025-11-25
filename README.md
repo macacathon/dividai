@@ -19,13 +19,12 @@ Acesse a versão hospedada: https://dividai-livid.vercel.app
 
 ```mermaid
 flowchart LR
-	A[Cliente Web<br/>React + Vite + Tailwind] -->|HTTP/JSON| B(API REST<br/>Express)
-	B -->|Auth (Bearer)| C[Clerk<br/>Auth as a Service]
-	B -->|Prisma ORM| D[(SQLite - SQL)]
-	subgraph Opcional
-		B -->|Driver| E[(MongoDB - NoSQL)]
-		B --> F[IA (HuggingFace/OpenAI)]
-	end
+  A[Frontend: React + Vite + Tailwind] -->|HTTP/JSON| B[API REST: Express]
+  B -->|Auth (Bearer)| C[Clerk]
+  B -->|Prisma ORM| D[SQLite (SQL)]
+  %% Componentes opcionais
+  B -.optional.-> E[MongoDB (NoSQL)]
+  B -.optional.-> F[IA: Sentimento/Categorização]
 ```
 
 ## Instalação e Execução (Dev)
