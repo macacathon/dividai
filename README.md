@@ -13,7 +13,7 @@ Aplicação web moderna para dividir despesas em grupo, com autenticação, API 
 
 ## 🌐 Acesso Online
 
-Acesse a versão hospedada: https://dividai-livid.vercel.app
+Acesse a versão hospedada: https://dividai-five.vercel.app
 
 ## Arquitetura (Visão Geral)
 
