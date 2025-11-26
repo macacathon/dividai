@@ -24,7 +24,7 @@ app.get('/users', async (req, res) => {
     res.json(users)
 })
 
-app.post('/users', ClerkExpressRequireAuth(), async (req, res) => {
+app.post('/users', async (req, res) => {
     const { email, name } = req.body
     try {
         const user = await prisma.user.create({ data: { email, name } })
@@ -40,7 +40,7 @@ app.get('/groups', async (req, res) => {
     res.json(groups)
 })
 
-app.post('/groups', ClerkExpressRequireAuth(), async (req, res) => {
+app.post('/groups', async (req, res) => {
     const { name, members = '', total = 0 } = req.body
     try {
         const group = await prisma.group.create({ data: { name, members, total: Number(total) } })
@@ -51,7 +51,7 @@ app.post('/groups', ClerkExpressRequireAuth(), async (req, res) => {
 })
 
 // Delete group and its expenses
-app.delete('/groups/:id', ClerkExpressRequireAuth(), async (req, res) => {
+app.delete('/groups/:id', async (req, res) => {
     const { id } = req.params
     try {
         // delete expenses belonging to group
@@ -70,7 +70,7 @@ app.get('/expenses', async (req, res) => {
     res.json(expenses)
 })
 
-app.post('/expenses', ClerkExpressRequireAuth(), async (req, res) => {
+app.post('/expenses', async (req, res) => {
     const { description, amount, paidBy, groupId } = req.body
     try {
         const expense = await prisma.expense.create({ data: { description, amount: Number(amount), paidBy, groupId } })
@@ -92,7 +92,7 @@ app.post('/expenses', ClerkExpressRequireAuth(), async (req, res) => {
 })
 
 // Delete an expense and update group total
-app.delete('/expenses/:id', ClerkExpressRequireAuth(), async (req, res) => {
+app.delete('/expenses/:id', async (req, res) => {
     const { id } = req.params
     try {
         const expense = await prisma.expense.findUnique({ where: { id } })
@@ -121,7 +121,7 @@ app.get('/settlements', async (req, res) => {
     res.json(settlements)
 })
 
-app.post('/settlements', ClerkExpressRequireAuth(), async (req, res) => {
+app.post('/settlements', async (req, res) => {
     const { fromUser, toUser, amount, groupId } = req.body
     try {
         const settlement = await prisma.settlement.create({ data: { fromUser, toUser, amount: Number(amount), groupId } })

@@ -37,18 +37,6 @@ interface Expense {
   date: string;
 }
 
-interface NewGroup {
-  name: string;
-  members: string;
-}
-
-interface NewExpense {
-  description: string;
-  amount: string;
-  paidBy: string;
-  groupId: string | null;
-}
-
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -74,8 +62,8 @@ interface Activity {
 export default function DividAiApp() {
   const API_BASE = (import.meta as any).env?.VITE_API_URL || window.location.origin;
   const [darkMode, setDarkMode] = useState<boolean>(false);
-  // Clerk auth
   const { getToken, isSignedIn } = useAuth();
+
   const [showCreateGroup, setShowCreateGroup] = useState<boolean>(false);
   const [showAddExpense, setShowAddExpense] = useState<boolean>(false);
   const [showGroupDetails, setShowGroupDetails] = useState<boolean>(false);
@@ -85,12 +73,9 @@ export default function DividAiApp() {
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
 
   const [groups, setGroups] = useState<Group[]>([]);
-
   const [expenses, setExpenses] = useState<Expense[]>([]);
-
   const [activities, setActivities] = useState<Activity[]>([]);
 
-  // Use refs for form fields to avoid re-renders on each keystroke (fixes focus loss while typing)
   const groupNameRef = useRef<HTMLInputElement | null>(null);
   const groupMembersRef = useRef<HTMLInputElement | null>(null);
 
@@ -99,7 +84,6 @@ export default function DividAiApp() {
   const expensePaidByRef = useRef<HTMLInputElement | null>(null);
   const expenseGroupRef = useRef<HTMLSelectElement | null>(null);
 
-  // No nested App component allowed here — keep only the top-level DividAiApp component
   useEffect(() => {
     const storedTheme = localStorage.getItem("dividai:darkMode");
     if (storedTheme !== null) {
@@ -107,7 +91,7 @@ export default function DividAiApp() {
     }
   }, []);
 
-  // Load data from API
+  // Load data from API (USANDO /api EM VEZ DE localhost)
   useEffect(() => {
     const load = async () => {
       if (!isSignedIn) {
@@ -120,6 +104,7 @@ export default function DividAiApp() {
         const headers = token
           ? { Authorization: `Bearer ${token}` }
           : undefined;
+
         const [gRes, eRes] = await Promise.all([
           fetch(`${API_BASE}/groups`, { headers }),
           fetch(`${API_BASE}/expenses`, { headers }),
@@ -127,7 +112,6 @@ export default function DividAiApp() {
 
         const [gJson, eJson] = await Promise.all([gRes.json(), eRes.json()]);
 
-        // prisma stores members as comma-separated string; convert
         const groupsFromApi: Group[] = gJson.map((g: any) => ({
           id: g.id,
           name: g.name,
@@ -160,7 +144,7 @@ export default function DividAiApp() {
     };
 
     load();
-  }, [isSignedIn]);
+  }, [isSignedIn, getToken]);
 
   useEffect(() => {
     localStorage.setItem("dividai:darkMode", String(darkMode));
@@ -301,7 +285,6 @@ export default function DividAiApp() {
   };
 
   const handleDeleteGroup = async (id: string) => {
-    // call API
     const token = await getToken({ template: "session" }).catch(() => null);
     const headers: Record<string, string> | undefined = token
       ? { Authorization: `Bearer ${token}` }
