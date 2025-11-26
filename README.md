@@ -71,7 +71,7 @@ npm run dev
 
 Aplicação padrão:
 - Frontend: http://localhost:5173
-- API: http://localhost:4000
+- API: use `VITE_API_URL` (ex.: https://dividai-five.vercel.app/)
 
 ## Autenticação e Proteção de Rotas
 
@@ -86,7 +86,7 @@ Aplicação padrão:
 
 ## Endpoints Principais (API REST)
 
-Base: `http://localhost:4000`
+Base: configurável via `VITE_API_URL` (em produção: seu domínio da Vercel)
 
 - `GET /` → status da API
 - `GET /users` → lista usuários

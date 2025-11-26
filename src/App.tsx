@@ -60,6 +60,7 @@ interface Activity {
 }
 
 export default function DividAiApp() {
+  const API_BASE = (import.meta as any).env?.VITE_API_URL || window.location.origin;
   const [darkMode, setDarkMode] = useState<boolean>(false);
   const { getToken, isSignedIn } = useAuth();
 
@@ -105,8 +106,8 @@ export default function DividAiApp() {
           : undefined;
 
         const [gRes, eRes] = await Promise.all([
-          fetch("/api/groups", { headers }),
-          fetch("/api/expenses", { headers }),
+          fetch(`${API_BASE}/groups`, { headers }),
+          fetch(`${API_BASE}/expenses`, { headers }),
         ]);
 
         const [gJson, eJson] = await Promise.all([gRes.json(), eRes.json()]);
@@ -167,8 +168,7 @@ export default function DividAiApp() {
     };
     if (token) headers.Authorization = `Bearer ${token}`;
 
-    // POST /api/groups
-    fetch("/api/groups", {
+    fetch(`${API_BASE}/groups`, {
       method: "POST",
       headers,
       body: JSON.stringify({
@@ -223,8 +223,7 @@ export default function DividAiApp() {
     };
     if (token) headers.Authorization = `Bearer ${token}`;
 
-    // POST /api/expenses
-    fetch("/api/expenses", {
+    fetch(`${API_BASE}/expenses`, {
       method: "POST",
       headers,
       body: JSON.stringify({
@@ -290,9 +289,7 @@ export default function DividAiApp() {
     const headers: Record<string, string> | undefined = token
       ? { Authorization: `Bearer ${token}` }
       : undefined;
-
-    // DELETE /api/groups/:id
-    fetch(`/api/groups/${id}`, { method: "DELETE", headers })
+    fetch(`${API_BASE}/groups/${id}`, { method: "DELETE", headers })
       .then((r) => {
         if (!r.ok) throw new Error("delete failed");
         setGroups((prev) => prev.filter((group) => group.id !== id));
